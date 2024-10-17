@@ -1,5 +1,5 @@
-import React, { useState, useContext, useRef, useEffect } from 'react';
-import { View, Button, StyleSheet } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Button, StyleSheet, Text } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import { RouteContext } from './RouteContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -16,6 +16,7 @@ const MapScreen = ({ navigation }) => {
     const [isDrawing, setIsDrawing] = useState(false);
     const mapRef = useRef(null);
     const [region, setRegion] = useState(DEFAULT_COORDINATES);
+    const [quote, setQuote] = useState('');
 
      // Load the current route when the app is opened
      useEffect(() => {
@@ -43,6 +44,15 @@ const MapScreen = ({ navigation }) => {
         return () => {
             saveCurrentRoute();
         };
+    }, []);
+
+    useEffect(() => {
+        const loadQuote = async () => {
+            const randomQuote = await fetchQuote();
+            setQuote(randomQuote);
+        };
+
+        loadQuote();
     }, []);
 
     // Save the current route to AsyncStorage
@@ -244,8 +254,23 @@ const MapScreen = ({ navigation }) => {
         }
     };
 
+    const fetchQuote = async () => {
+        try {
+            const response = await fetch('https://api.quotable.io/random');
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            const data = await response.json();
+            return data.content; // returns the quote text
+        } catch (error) {
+            console.error('Error fetching quote:', error);
+            return 'To travel is to live'; // Default quote in case of failure
+        }
+    };
+
     return (
         <View style={styles.container}>
+            <Text style={styles.quoteText}>{quote}</Text>
             <MapView
                 ref={mapRef}
                 style={styles.map}
@@ -310,6 +335,12 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         borderWidth: 3,
         opacity: 0.85,
+    },
+    quoteText: {
+        fontSize: 16,
+        fontStyle: 'italic',
+        textAlign: 'center',
+        margin: 7,
     },
 });
 
