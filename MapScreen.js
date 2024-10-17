@@ -20,6 +20,7 @@ const MapScreen = ({ navigation }) => {
      // Load the current route when the app is opened
      useEffect(() => {
         const loadCurrentRoute = async () => {
+            setIsDrawing(false)
             try {
                 const currentRoute = await AsyncStorage.getItem('currentRoute');
                 if (currentRoute) {
@@ -46,7 +47,7 @@ const MapScreen = ({ navigation }) => {
 
     // Save the current route to AsyncStorage
     const saveCurrentRoute = async (coordinates) => {
-        if (coordinates && coordinates.length > 0) { // Check if coordinates are valid
+        if (coordinates) { // Check if coordinates are valid
             try {
                 await AsyncStorage.setItem('currentRoute', JSON.stringify(coordinates));
             } catch (error) {
