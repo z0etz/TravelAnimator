@@ -1,9 +1,10 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import MapScreen from './MapScreen'; // Correct import
-import SavedRoutesScreen from './SavedRoutesScreen'; // Correct import
-import { RouteProvider } from './RouteContext'; // Correct import
+import MapScreen from './MapScreen';
+import AnimateScreen from './AnimateScreen.js';
+import SavedRoutesScreen from './SavedRoutesScreen'; 
+import { RouteProvider } from './RouteContext';
 
 const Stack = createStackNavigator();
 
@@ -14,6 +15,7 @@ export default function App() {
         <Stack.Navigator initialRouteName="Map">
           <Stack.Screen name="Map" component={MapScreen} options={{ title: 'Travel Animator' }} />
           <Stack.Screen name="SavedRoutes" component={SavedRoutesScreen} options={{ title: 'Saved Routes' }} />
+          <Stack.Screen name="Animate" component={AnimateScreen} options={{ title: 'Animate' }} />
         </Stack.Navigator>
       </NavigationContainer>
     </RouteProvider>

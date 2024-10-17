@@ -74,8 +74,8 @@ const SavedRoutesScreen = ({ navigation }) => {
                             )}
                         </View>
                         <View style={styles.buttonContainer}>
-                            <Button title="Load" onPress={() => loadRoute(item)} />
-                            <Button title="Delete" onPress={() => deleteRoute(index)} />
+                            <Button title="Load" onPress={() => loadRoute(item)} color={"#1d5fc0"}/>
+                            <Button title="Delete" onPress={() => deleteRoute(index)} color={"#1d5fc0"}/>
                         </View>
                     </View>
                 )}

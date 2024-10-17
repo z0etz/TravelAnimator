@@ -314,6 +314,7 @@ const MapScreen = ({ navigation }) => {
                 <Button title="Clear Route" onPress={clearRoute} color="#1d5fc0" />
                 <Button title="Save Route" onPress={saveRoute} color="#1d5fc0" />
                 <Button title="View Saved Routes" onPress={() => navigation.navigate('SavedRoutes')} color="#1d5fc0" />
+                <Button title="Animate" onPress={() => navigation.navigate('Animate')} color="#1d5fc0" />
             </View>
         </View>
     );
