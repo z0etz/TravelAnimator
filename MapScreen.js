@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Button, StyleSheet, Text } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { RouteContext } from './RouteContext';
+import { useIsFocused } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DEFAULT_COORDINATES = {
@@ -17,11 +17,11 @@ const MapScreen = ({ navigation }) => {
     const mapRef = useRef(null);
     const [region, setRegion] = useState(DEFAULT_COORDINATES);
     const [quote, setQuote] = useState('');
+    const isFocused = useIsFocused();
 
-     // Load the current route when the app is opened
      useEffect(() => {
         const loadCurrentRoute = async () => {
-            setIsDrawing(false)
+            setIsDrawing(false);
             try {
                 const currentRoute = await AsyncStorage.getItem('currentRoute');
                 if (currentRoute) {
@@ -35,16 +35,10 @@ const MapScreen = ({ navigation }) => {
             }
         };
 
-        loadCurrentRoute();
-
-        // Listen for focus events on the screen
-        const unsubscribe = navigation.addListener('focus', loadCurrentRoute);
-
-        // Automatically save the current route when the component unmounts
-        return () => {
-            saveCurrentRoute();
-        };
-    }, []);
+        if (isFocused) {
+            loadCurrentRoute();
+        }
+    }, [isFocused]);
 
     useEffect(() => {
         const loadQuote = async () => {
@@ -52,12 +46,14 @@ const MapScreen = ({ navigation }) => {
             setQuote(randomQuote);
         };
 
-        loadQuote();
-    }, []);
+        if (isFocused) {
+            loadQuote();
+        }
+    }, [isFocused]);
 
     // Save the current route to AsyncStorage
     const saveCurrentRoute = async (coordinates) => {
-        if (coordinates) { // Check if coordinates are valid
+        if (coordinates) {
             try {
                 await AsyncStorage.setItem('currentRoute', JSON.stringify(coordinates));
             } catch (error) {
@@ -256,18 +252,25 @@ const MapScreen = ({ navigation }) => {
 
     const fetchQuote = async () => {
         try {
-            const response = await fetch('https://api.quotable.io/random');
+            // Possibly change back to quotable when it comes back online:
+            // const response = await fetch('https://api.quotable.io/random');
+
+            const response = await fetch('https://zenquotes.io/api/random');
             if (!response.ok) {
                 throw new Error(`Network response was not ok: ${response.statusText}`);
             }
             const data = await response.json();
-            return data.content; // returns the quote text
+            const quote = data[0]?.q;
+            console.log("Fetched quote:", quote);
+            if (quote === "Too many requests. Obtain an auth key for unlimited access.") {
+                    return 'To travel is to live.'
+            }
+            return quote || 'To travel is to live.';
         } catch (error) {
             console.error('Error fetching quote:', error);
-            return 'To travel is to live'; // Default quote in case of failure
+            return 'To travel is to live.';
         }
     };
-
     return (
         <View style={styles.container}>
             <Text style={styles.quoteText}>{quote}</Text>
@@ -307,10 +310,10 @@ const MapScreen = ({ navigation }) => {
             </MapView>
 
             <View style={styles.buttonContainer}>
-                <Button title={isDrawing ? 'Stop Drawing' : 'Start Drawing'} onPress={toggleDrawing} />
-                <Button title="Clear Route" onPress={clearRoute} />
-                <Button title="Save Route" onPress={saveRoute} />
-                <Button title="View Saved Routes" onPress={() => navigation.navigate('SavedRoutes')} />
+                <Button title={isDrawing ? 'Stop Drawing' : 'Start Drawing'} onPress={toggleDrawing} color="#1d5fc0" />
+                <Button title="Clear Route" onPress={clearRoute} color="#1d5fc0" />
+                <Button title="Save Route" onPress={saveRoute} color="#1d5fc0" />
+                <Button title="View Saved Routes" onPress={() => navigation.navigate('SavedRoutes')} color="#1d5fc0" />
             </View>
         </View>
     );
