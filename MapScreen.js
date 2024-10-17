@@ -4,10 +4,18 @@ import MapView, { Marker, Polyline } from 'react-native-maps';
 import { RouteContext } from './RouteContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const DEFAULT_COORDINATES = {
+    latitude: 59.3293,
+    longitude: 18.0686,
+    latitudeDelta: 0.1,
+    longitudeDelta: 0.1,
+};
+
 const MapScreen = ({ navigation }) => {
     const [routeCoordinates, setRouteCoordinates] = useState([]);
     const [isDrawing, setIsDrawing] = useState(false);
     const mapRef = useRef(null);
+    const [region, setRegion] = useState(DEFAULT_COORDINATES);
 
      // Load the current route when the app is opened
      useEffect(() => {
@@ -15,7 +23,10 @@ const MapScreen = ({ navigation }) => {
             try {
                 const currentRoute = await AsyncStorage.getItem('currentRoute');
                 if (currentRoute) {
-                    setRouteCoordinates(JSON.parse(currentRoute));
+                    const coordinates = JSON.parse(currentRoute);
+                    console.log("Retrieved coordinates:", coordinates);
+                    setRouteCoordinates(coordinates);
+                    setRegion(calculateRegion(coordinates));
                 }
             } catch (error) {
                 console.log('Error loading current route:', error);
@@ -185,6 +196,33 @@ const MapScreen = ({ navigation }) => {
         return `${day}/${month}/${year}, ${hours}:${minutes}`;
     };
 
+    const calculateRegion = (coordinates) => {
+        if (!Array.isArray(coordinates) || coordinates.length === 0) {
+            console.log("Cordinates empty", coordinates);
+            return DEFAULT_COORDINATES;
+        }
+    
+        const latitudes = coordinates.map(coord => coord.latitude);
+        const longitudes = coordinates.map(coord => coord.longitude);
+    
+        const latitudeDelta = Math.max(...latitudes) - Math.min(...latitudes) + 0.1; // Adding padding
+        const longitudeDelta = Math.max(...longitudes) - Math.min(...longitudes) + 0.1;
+    
+        const centerLatitude = (Math.max(...latitudes) + Math.min(...latitudes)) / 2;
+        const centerLongitude = (Math.max(...longitudes) + Math.min(...longitudes)) / 2;
+    
+        const calculatedRegion = {
+            latitude: centerLatitude,
+            longitude: centerLongitude,
+            latitudeDelta,
+            longitudeDelta,
+        };
+        
+        console.log("Calculated region:", calculatedRegion);
+    
+        return calculatedRegion;
+    };
+
     const saveRoute = async () => {
         try {
             const existingRoutes = await AsyncStorage.getItem('savedRoutes');
@@ -205,36 +243,12 @@ const MapScreen = ({ navigation }) => {
         }
     };
 
-
-    const handleLoadSavedRoute = async (index) => {
-        try {
-            const savedRoutes = await AsyncStorage.getItem('savedRoutes');
-            if (savedRoutes) {
-                const routesArray = JSON.parse(savedRoutes);
-                // Load the selected route
-                const selectedRoute = routesArray[index]; // Index of the saved route to load
-                if (selectedRoute) {
-                    setRouteCoordinates(selectedRoute);
-                    await AsyncStorage.setItem('currentRoute', JSON.stringify(selectedRoute)); // Save as current route
-                }
-            }
-        } catch (error) {
-            console.log('Error loading saved route:', error);
-        }
-    };
-    
-
     return (
         <View style={styles.container}>
             <MapView
                 ref={mapRef}
                 style={styles.map}
-                initialRegion={{
-                    latitude: 37.78825,
-                    longitude: -122.4324,
-                    latitudeDelta: 0.0922,
-                    longitudeDelta: 0.0421,
-                }}
+                region={region}
                 onPress={handleMapPress}
             >
                 {/* Border Polyline */}
@@ -254,8 +268,8 @@ const MapScreen = ({ navigation }) => {
                     <Marker
                         key={index}
                         coordinate={coordinate}
-                        onPress={() => removeMarker(index)}
-                        draggable
+                        onPress={isDrawing ? () => removeMarker(index) : null}
+                        draggable={isDrawing} 
                         onDragEnd={(e) => handleMarkerDragEnd(e, index)}
                         hitSlop={{ top: 0, bottom: 0, left: 0, right: 0 }}
                     >
