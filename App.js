@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MapScreen from './MapScreen';
 import AnimateScreen from './AnimateScreen.js';
 import SavedRoutesScreen from './SavedRoutesScreen'; 
-import { RouteProvider } from './RouteContext';
+import { RouteProvider } from './RouteContext.js';
 
 const Stack = createStackNavigator();
 
