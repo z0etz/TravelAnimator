@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Button, StyleSheet, Animated, Easing } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { calculateRegion, DEFAULT_COORDINATES, getDistanceToSegment, formatDate } from './mapUtils';
+import { calculateRegion, DEFAULT_COORDINATES } from './mapUtils';
+import { exportVideo } from './videoExporter';
+
+console.log("exportVideo:", exportVideo);
 
 const AnimateScreen = () => {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
-  const [animatedPosition] = useState(new Animated.Value(0)); // Controls the animation progress (0 to 1)
   const [region, setRegion] = useState(DEFAULT_COORDINATES);
+  const mapRef = useRef(null);
+  const animatedPosition = useRef(new Animated.Value(0)).current; // Keep animatedPosition as a ref
+  const animationIdRef = useRef(0); // Create a ref for animation ID
 
   useEffect(() => {
     const loadCurrentRoute = async () => {
@@ -44,14 +49,37 @@ const AnimateScreen = () => {
     return { latitude, longitude };
   };
 
-  // Start the animation
-  const startAnimation = () => {
-    Animated.timing(animatedPosition, {
-      toValue: 1, // Animate from 0 (start of route) to 1 (end of route)
-      duration: 5000, // Duration of the animation (in milliseconds)
-      easing: Easing.linear, // Linear easing to move at constant speed
-      useNativeDriver: false, // This should be false since we're animating map coordinates
-    }).start();
+// Start the animation
+const startAnimation = () => {
+    // Increment animation ID each time a new animation starts
+    const newAnimationId = animationIdRef.current + 1;
+    animationIdRef.current = newAnimationId; // Update the ref
+
+    // Stop any ongoing animation before starting a new one
+    animatedPosition.stopAnimation(() => {
+      // Reset the animation value to 0 before starting
+      animatedPosition.setValue(0);
+
+      Animated.timing(animatedPosition, {
+        toValue: 1, // Animate from 0 (start of route) to 1 (end of route)
+        duration: 5000, // Duration of the animation (in milliseconds)
+        easing: Easing.linear, // Linear easing to move at constant speed
+        useNativeDriver: false, // This should be false since we're animating map coordinates
+      }).start(() => {
+        // Check if the animation is still the latest one
+        console.log("newAnimationId = ", newAnimationId, " animationId = ", animationIdRef.current);
+        if (newAnimationId === animationIdRef.current) {
+          console.log('Animation finished, waiting 1 second to reset...');
+          setTimeout(() => {
+            console.log("newAnimationId = ", newAnimationId, " animationId = ", animationIdRef.current);
+            if (newAnimationId === animationIdRef.current) { // Check again if it's still the current animation
+              animatedPosition.setValue(0); // Reset the animation value to 0 after 1 second
+              console.log('Animation reset');
+            }
+          }, 750); // 750 milliseconds delay
+        }
+      });
+    });
   };
 
   const markerPosition = interpolatePosition();
@@ -72,7 +100,8 @@ const AnimateScreen = () => {
       </MapView>
 
       <View style={styles.buttonContainer}>
-        <Text onPress={startAnimation} style={styles.buttonText}>Start Animation</Text>
+        <Button title="Start Animation" onPress={startAnimation} color="#1d5fc0" />
+        <Button title="Export Video" onPress={exportVideo} color="#1d5fc0" />
       </View>
     </View>
   );
@@ -90,15 +119,9 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 18,
-    backgroundColor: '#1d5fc0',
-    color: '#fff',
-    padding: 10,
-    borderRadius: 5,
+    justifyContent: 'space-between', // Ensure buttons are spaced apart
   },
 });
+
 
 export default AnimateScreen;
