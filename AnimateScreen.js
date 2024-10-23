@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Button, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Button, StyleSheet, Animated, Easing, Text } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateRegion, DEFAULT_COORDINATES } from './mapUtils';
 import { exportVideo } from './videoExporter';
-
-console.log("exportVideo:", exportVideo);
+import Slider from '@react-native-community/slider'; 
 
 const AnimateScreen = () => {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [region, setRegion] = useState(DEFAULT_COORDINATES);
+  const [sliderValue, setSliderValue] = useState(5000);
   const mapRef = useRef(null);
-  const animatedPosition = useRef(new Animated.Value(0)).current; // Keep animatedPosition as a ref
-  const animationIdRef = useRef(0); // Create a ref for animation ID
+  const animatedPosition = useRef(new Animated.Value(0)).current;
+  const animationIdRef = useRef(0); 
 
   useEffect(() => {
     const loadCurrentRoute = async () => {
@@ -61,10 +61,10 @@ const startAnimation = () => {
       animatedPosition.setValue(0);
 
       Animated.timing(animatedPosition, {
-        toValue: 1, // Animate from 0 (start of route) to 1 (end of route)
-        duration: 5000, // Duration of the animation (in milliseconds)
-        easing: Easing.linear, // Linear easing to move at constant speed
-        useNativeDriver: false, // This should be false since we're animating map coordinates
+        toValue: 1,
+        duration: sliderValue, 
+        easing: Easing.linear, 
+        useNativeDriver: false,
       }).start(() => {
         // Check if the animation is still the latest one
         console.log("newAnimationId = ", newAnimationId, " animationId = ", animationIdRef.current);
@@ -86,22 +86,42 @@ const startAnimation = () => {
 
   return (
     <View style={styles.container}>
-      <MapView style={styles.map} region={region}>
-        {/* Polyline showing the route */}
+      <MapView ref={mapRef} style={styles.map} region={region}>
         <Polyline coordinates={routeCoordinates} strokeColor="#8cb6ff" strokeWidth={5} />
-
-        {/* Marker that moves along the route */}
         {markerPosition && (
           <Marker.Animated
             coordinate={markerPosition}
-            pinColor="red" // You can replace this with a car icon or something similar later
+            pinColor="red"
           />
         )}
       </MapView>
 
-      <View style={styles.buttonContainer}>
-        <Button title="Start Animation" onPress={startAnimation} color="#1d5fc0" />
-        <Button title="Export Video" onPress={exportVideo} color="#1d5fc0" />
+      <View style={styles.controlsContainer}>
+        {/* Button Container with Equal Widths */}
+        <View style={styles.buttonContainer}>
+          <View style={styles.buttonWrapper}>
+            <Button title="Start Animation" onPress={startAnimation} color="#1d5fc0" />
+          </View>
+          <View style={styles.buttonWrapper}>
+            <Button title="Export Video" onPress={exportVideo} color="#1d5fc0" />
+          </View>
+        </View>
+
+        {/* Speed Control Slider */}
+        <View style={styles.sliderContainer}>
+          <Text style={styles.sliderText}>Animation Speed: {Math.round(sliderValue / 1000)}s</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={1000} // Minimum duration of 1 second
+            maximumValue={10000} // Maximum duration of 10 seconds
+            value={sliderValue}
+            onValueChange={value => setSliderValue(value)} // Update slider value in real-time
+            step={500} // Step of 500ms
+            minimumTrackTintColor="#1d5fc0"
+            maximumTrackTintColor="#dddddd"
+            thumbTintColor="#1d5fc0" // Color of the thumb
+          />
+        </View>
       </View>
     </View>
   );
@@ -114,14 +134,37 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-  buttonContainer: {
+  controlsContainer: {
     position: 'absolute',
     bottom: 20,
     left: 20,
     right: 20,
-    justifyContent: 'space-between', // Ensure buttons are spaced apart
+    backgroundColor: '#ffffff', // Background color for better contrast
+    borderRadius: 10, // Rounded corners
+    padding: 15, // Padding for better spacing
+    elevation: 5, // Shadow effect for elevation
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', // Space between buttons
+    marginBottom: 15, // Space between buttons and slider
+  },
+  buttonWrapper: {
+    flex: 1, // Each button will take equal width
+    marginHorizontal: 5, // Margin between buttons
+  },
+  sliderContainer: {
+    alignItems: 'center', // Center the text and slider
+  },
+  sliderText: {
+    fontSize: 16,
+    color: '#333333', // Text color
+    marginBottom: 5, // Space between text and slider
+  },
+  slider: {
+    width: '100%',
+    height: 40,
   },
 });
-
 
 export default AnimateScreen;

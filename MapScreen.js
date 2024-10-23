@@ -165,7 +165,7 @@ const MapScreen = ({ navigation }) => {
             // Add the current route to the saved routes
             routesArray.push(routeToSave);
             await AsyncStorage.setItem('savedRoutes', JSON.stringify(routesArray));
-            alert('Route saved successfully!'); // Notify the user of success
+            alert('Route saved successfully!');
         } catch (error) {
             console.log('Error saving route:', error);
             alert('Failed to save route. Please try again.'); 
