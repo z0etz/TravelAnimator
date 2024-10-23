@@ -63,11 +63,11 @@ export const calculateRegion = (coordinates, defaultRegion) => {
 };
 
 export const formatDate = (date) => {
-    const day = String(date.getDate()).padStart(2, '0'); // Day
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Month (0-indexed)
-    const year = String(date.getFullYear()).slice(-2); // Last two digits of the year
-    const hours = String(date.getHours()).padStart(2, '0'); // Hours
-    const minutes = String(date.getMinutes()).padStart(2, '0'); // Minutes
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
 
     return `${day}/${month}/${year}, ${hours}:${minutes}`;
 };

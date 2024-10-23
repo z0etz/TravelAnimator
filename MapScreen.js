@@ -45,7 +45,6 @@ const MapScreen = ({ navigation }) => {
         }
     }, [isFocused]);
 
-    // Save the current route to AsyncStorage
     const saveCurrentRoute = async (coordinates) => {
         if (coordinates) {
             try {
@@ -55,7 +54,6 @@ const MapScreen = ({ navigation }) => {
             }
         }
     };
-
 
     const toggleDrawing = () => {
         setIsDrawing(prev => !prev);
@@ -103,7 +101,7 @@ const MapScreen = ({ navigation }) => {
     };
 
     const isPolylinePressed = (pressedCoordinate) => {
-        const thresholdDistance = 0.01; // Adjust the proximity threshold as needed
+        const thresholdDistance = 0.01;
 
         for (let i = 0; i < routeCoordinates.length - 1; i++) {
             const start = routeCoordinates[i];
@@ -124,20 +122,17 @@ const MapScreen = ({ navigation }) => {
             longitude: pressedCoordinate.longitude,
         };
 
-        // Find the closest segment
         let closestSegmentIndex = 0;
         let minDistance = Number.MAX_VALUE;
 
         for (let i = 0; i < routeCoordinates.length - 1; i++) {
             const start = routeCoordinates[i];
             const end = routeCoordinates[i + 1];
-
-            // Calculate the distance from the pressed point to the line segment
             const distance = getDistanceToSegment(newCoordinate, start, end);
 
             if (distance < minDistance) {
                 minDistance = distance;
-                closestSegmentIndex = i; // Segment index before which we should insert
+                closestSegmentIndex = i;
             }
         }
 
@@ -162,7 +157,6 @@ const MapScreen = ({ navigation }) => {
                 savedAt: formatDate(new Date()),
             };
 
-            // Add the current route to the saved routes
             routesArray.push(routeToSave);
             await AsyncStorage.setItem('savedRoutes', JSON.stringify(routesArray));
             alert('Route saved successfully!');
@@ -174,9 +168,6 @@ const MapScreen = ({ navigation }) => {
 
     const fetchQuote = async () => {
         try {
-            // Possibly change back to quotable when it comes back online:
-            // const response = await fetch('https://api.quotable.io/random');
-
             const response = await fetch('https://zenquotes.io/api/random');
             if (!response.ok) {
                 throw new Error(`Network response was not ok: ${response.statusText}`);
@@ -193,6 +184,7 @@ const MapScreen = ({ navigation }) => {
             return 'To travel is to live.';
         }
     };
+    
     return (
         <View style={styles.container}>
             <Text style={styles.quoteText}>{quote}</Text>

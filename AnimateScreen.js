@@ -49,15 +49,12 @@ const AnimateScreen = () => {
     return { latitude, longitude };
   };
 
-// Start the animation
-const startAnimation = () => {
-    // Increment animation ID each time a new animation starts
-    const newAnimationId = animationIdRef.current + 1;
-    animationIdRef.current = newAnimationId; // Update the ref
 
-    // Stop any ongoing animation before starting a new one
+const startAnimation = () => {
+    const newAnimationId = animationIdRef.current + 1;
+    animationIdRef.current = newAnimationId;
+
     animatedPosition.stopAnimation(() => {
-      // Reset the animation value to 0 before starting
       animatedPosition.setValue(0);
 
       Animated.timing(animatedPosition, {
@@ -66,14 +63,13 @@ const startAnimation = () => {
         easing: Easing.linear, 
         useNativeDriver: false,
       }).start(() => {
-        // Check if the animation is still the latest one
         console.log("newAnimationId = ", newAnimationId, " animationId = ", animationIdRef.current);
         if (newAnimationId === animationIdRef.current) {
           console.log('Animation finished, waiting 1 second to reset...');
           setTimeout(() => {
             console.log("newAnimationId = ", newAnimationId, " animationId = ", animationIdRef.current);
-            if (newAnimationId === animationIdRef.current) { // Check again if it's still the current animation
-              animatedPosition.setValue(0); // Reset the animation value to 0 after 1 second
+            if (newAnimationId === animationIdRef.current) { 
+              animatedPosition.setValue(0);
               console.log('Animation reset');
             }
           }, 750); // 750 milliseconds delay
@@ -97,7 +93,6 @@ const startAnimation = () => {
       </MapView>
 
       <View style={styles.controlsContainer}>
-        {/* Button Container with Equal Widths */}
         <View style={styles.buttonContainer}>
           <View style={styles.buttonWrapper}>
             <Button title="Start Animation" onPress={startAnimation} color="#1d5fc0" />
@@ -106,20 +101,18 @@ const startAnimation = () => {
             <Button title="Export Video" onPress={exportVideo} color="#1d5fc0" />
           </View>
         </View>
-
-        {/* Speed Control Slider */}
         <View style={styles.sliderContainer}>
           <Text style={styles.sliderText}>Animation Speed: {Math.round(sliderValue / 1000)}s</Text>
           <Slider
             style={styles.slider}
-            minimumValue={1000} // Minimum duration of 1 second
-            maximumValue={10000} // Maximum duration of 10 seconds
+            minimumValue={1000}
+            maximumValue={360000}
             value={sliderValue}
-            onValueChange={value => setSliderValue(value)} // Update slider value in real-time
-            step={500} // Step of 500ms
+            onValueChange={value => setSliderValue(value)}
+            step={500} 
             minimumTrackTintColor="#1d5fc0"
             maximumTrackTintColor="#dddddd"
-            thumbTintColor="#1d5fc0" // Color of the thumb
+            thumbTintColor="#1d5fc0"
           />
         </View>
       </View>
@@ -139,31 +132,30 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-    backgroundColor: '#ffffff', // Background color for better contrast
-    borderRadius: 10, // Rounded corners
-    padding: 15, // Padding for better spacing
-    elevation: 5, // Shadow effect for elevation
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    padding: 15, 
+    elevation: 5,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // Space between buttons
-    marginBottom: 15, // Space between buttons and slider
+    justifyContent: 'space-between',
+    marginBottom: 15,
   },
   buttonWrapper: {
-    flex: 1, // Each button will take equal width
-    marginHorizontal: 5, // Margin between buttons
+    flex: 1,
+    marginHorizontal: 5,
   },
   sliderContainer: {
-    alignItems: 'center', // Center the text and slider
+    alignItems: 'center',
   },
   sliderText: {
-    fontSize: 16,
-    color: '#333333', // Text color
-    marginBottom: 5, // Space between text and slider
+    fontSize: 12,
+    color: '#333333',
   },
   slider: {
     width: '100%',
-    height: 40,
+    height: 20,
   },
 });
 
