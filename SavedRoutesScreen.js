@@ -4,8 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SavedRoutesScreen = ({ navigation }) => {
     const [savedRoutes, setSavedRoutes] = useState([]);
-    const [editingIndex, setEditingIndex] = useState(null); // Index of the route being edited
-    const [newRouteName, setNewRouteName] = useState(''); // New name for the route
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [newRouteName, setNewRouteName] = useState('');
 
     useEffect(() => {
         const loadSavedRoutes = async () => {
@@ -38,9 +38,10 @@ const SavedRoutesScreen = ({ navigation }) => {
         setNewRouteName(currentName || `Route ${index + 1}`);
     };
 
+    // Update route name or set default name if empty
     const saveRouteName = async (index) => {
         const updatedRoutes = [...savedRoutes];
-        updatedRoutes[index].name = newRouteName.trim() || `Route ${index + 1}`; // Update route name or set default name if empty
+        updatedRoutes[index].name = newRouteName.trim() || `Route ${index + 1}`;
         await AsyncStorage.setItem('savedRoutes', JSON.stringify(updatedRoutes));
         setSavedRoutes(updatedRoutes);
         setEditingIndex(null);
@@ -99,13 +100,13 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
     routeTextContainer: {
-        flex: 1,  // Allows the text container to take up available space
-        marginRight: 10, // Adds space between text and buttons
+        flex: 1, 
+        marginRight: 10,
     },
     routeText: {
-        flex: 1, // Ensures text wraps properly if too long
+        flex: 1,
         flexWrap: 'wrap', 
-        marginRight: 10, // Adds space between text and buttons
+        marginRight: 10,
     },
     savedAtText: {
         fontSize: 12,

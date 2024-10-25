@@ -1,4 +1,3 @@
-
 const requestPermission = async () => {
 };
 

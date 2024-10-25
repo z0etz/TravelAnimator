@@ -136,7 +136,7 @@ const MapScreen = ({ navigation }) => {
             }
         }
 
-        // Insert the new marker between the two points defining the closest segment
+        // Insert the new marker between the two points of the closest segment
         const updatedRoute = [
             ...routeCoordinates.slice(0, closestSegmentIndex + 1),
             newCoordinate,

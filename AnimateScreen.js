@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Button, StyleSheet, Animated, Easing, Text } from 'react-native';
+import { View, Button, StyleSheet, Animated, Easing, Text, Dimensions, Image } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { calculateRegion, DEFAULT_COORDINATES } from './mapUtils';
 import { exportVideo } from './videoExporter';
 import Slider from '@react-native-community/slider'; 
+import { Picker } from '@react-native-picker/picker';
 
 const AnimateScreen = () => {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [region, setRegion] = useState(DEFAULT_COORDINATES);
   const [sliderValue, setSliderValue] = useState(5000);
+  const [aspectRatio, setAspectRatio] = useState('9:16');
   const mapRef = useRef(null);
   const animatedPosition = useRef(new Animated.Value(0)).current;
-  const animationIdRef = useRef(0); 
+  const animationIdRef = useRef(0);
+  const [markerAngle, setMarkerAngle] = useState(0);
 
   useEffect(() => {
     const loadCurrentRoute = async () => {
@@ -31,11 +34,31 @@ const AnimateScreen = () => {
     loadCurrentRoute();
   }, []);
 
-  // Function to interpolate the animated marker position along the route
+  const getMapHeight = () => {
+    switch (aspectRatio) {
+      case '9:16':
+        return (deviceWidth / 9) * 16;
+      case '3:2':
+        return (deviceWidth / 3) * 2;
+      case '1:1':
+        return deviceWidth;
+      default:
+        return (deviceWidth / 9) * 16;
+    }
+  };
+
+  useEffect(() => {
+    if (routeCoordinates.length > 0) {
+      const newRegion = calculateRegion(routeCoordinates);
+      setRegion(newRegion);
+    }
+  }, [aspectRatio, routeCoordinates]);
+
+  const { width: deviceWidth } = Dimensions.get('window');
+
   const interpolatePosition = () => {
     if (routeCoordinates.length === 0) return null;
-    
-    // Use the animated value to interpolate the position between points
+
     const inputRange = routeCoordinates.map((_, index) => index / (routeCoordinates.length - 1));
     const latitude = animatedPosition.interpolate({
       inputRange,
@@ -49,8 +72,7 @@ const AnimateScreen = () => {
     return { latitude, longitude };
   };
 
-
-const startAnimation = () => {
+  const startAnimation = () => {
     const newAnimationId = animationIdRef.current + 1;
     animationIdRef.current = newAnimationId;
 
@@ -59,36 +81,74 @@ const startAnimation = () => {
 
       Animated.timing(animatedPosition, {
         toValue: 1,
-        duration: sliderValue, 
-        easing: Easing.linear, 
+        duration: sliderValue,
+        easing: Easing.linear,
         useNativeDriver: false,
       }).start(() => {
-        console.log("newAnimationId = ", newAnimationId, " animationId = ", animationIdRef.current);
         if (newAnimationId === animationIdRef.current) {
-          console.log('Animation finished, waiting 1 second to reset...');
           setTimeout(() => {
-            console.log("newAnimationId = ", newAnimationId, " animationId = ", animationIdRef.current);
-            if (newAnimationId === animationIdRef.current) { 
+            if (newAnimationId === animationIdRef.current) {
               animatedPosition.setValue(0);
-              console.log('Animation reset');
             }
-          }, 750); // 750 milliseconds delay
+          }, 750);
         }
       });
     });
   };
 
+  const calculateAngle = (currentCoord, nextCoord) => {
+    const deltaLong = nextCoord.longitude - currentCoord.longitude;
+    const deltaLat = nextCoord.latitude - currentCoord.latitude;
+  
+    const angleRadians = Math.atan2(deltaLong, deltaLat);
+    const angleDegrees = (angleRadians * (180 / Math.PI) + 360) % 360;
+
+    return angleDegrees;
+  };
+  
   const markerPosition = interpolatePosition();
+
+  useEffect(() => {
+    if (markerPosition && routeCoordinates.length > 1) {
+      animatedPosition.addListener(({ value }) => {
+        const currentIndex = value * (routeCoordinates.length - 1);
+        const nextIndex = Math.min(Math.floor(currentIndex + 1), routeCoordinates.length - 1);
+        
+        const currentCoord = routeCoordinates[Math.floor(currentIndex)];
+        const nextCoord = routeCoordinates[nextIndex];
+
+        if (currentCoord && nextCoord) {
+          const angle = calculateAngle(currentCoord, nextCoord);
+          setMarkerAngle(angle);
+        }
+      });
+    }
+
+    return () => {
+      animatedPosition.removeAllListeners();
+    };
+  }, [animatedPosition, routeCoordinates]);
 
   return (
     <View style={styles.container}>
-      <MapView ref={mapRef} style={styles.map} region={region}>
-        <Polyline coordinates={routeCoordinates} strokeColor="#8cb6ff" strokeWidth={5} />
+      <MapView ref={mapRef} style={[styles.map, { height: getMapHeight() }]} region={region}>
+        <Polyline coordinates={routeCoordinates} strokeColor="#8cb6ff" strokeWidth={3} />
+
         {markerPosition && (
-          <Marker.Animated
-            coordinate={markerPosition}
-            pinColor="red"
-          />
+          <Marker.Animated coordinate={markerPosition} anchor={{ x: 0.5, y: 0.5 }}>
+            <View style={styles.markerContainer}>
+              <Image
+                source={require('./assets/blue_van.png')}
+                style={{
+                  width: 50, 
+                  height: 50,
+                  padding: 10,
+                  transform: [{ rotate: `${markerAngle}deg` }],
+                }}
+                resizeMode="contain"
+              />
+            </View>
+          </Marker.Animated>
         )}
       </MapView>
 
@@ -115,6 +175,19 @@ const startAnimation = () => {
             thumbTintColor="#1d5fc0"
           />
         </View>
+        <View style={styles.pickerContainer}>
+          <Text style={styles.pickerLabel}>Aspect Ratio</Text>
+          <Picker
+            selectedValue={aspectRatio}
+            style={styles.picker}
+            itemStyle={styles.pickerItem}
+            onValueChange={(itemValue) => setAspectRatio(itemValue)}
+          >
+            <Picker.Item label="Portrait (9:16)" value="9:16" />
+            <Picker.Item label="Landscape (3:2)" value="3:2" />
+            <Picker.Item label="Square (1:1)" value="1:1" />
+          </Picker>
+        </View>
       </View>
     </View>
   );
@@ -125,7 +198,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   map: {
-    flex: 1,
+    width: '100%',
   },
   controlsContainer: {
     position: 'absolute',
@@ -155,6 +228,22 @@ const styles = StyleSheet.create({
   },
   slider: {
     width: '100%',
+    height: 20,
+  },
+  pickerContainer: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  pickerLabel: {
+    fontSize: 12,
+    color: '#333333',
+  },
+  picker: {
+    width: '80%',
+    height: 40,
+  },
+  pickerItem: {
+    fontSize: 12,
     height: 20,
   },
 });
